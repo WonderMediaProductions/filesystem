@@ -163,5 +163,7 @@ int main(int argc, char **argv) {
     cout << "resolve(filesystem/path.h) = " << resolver().resolve("filesystem/path.h") << endl;
     cout << "resolve(nonexistant) = " << resolver().resolve("nonexistant") << endl;
 
+    cout << "with_extension(foo.bar -> foo.qix) = " << path("a/b/c/foo.bar").with_extension(".qix") << endl;
+
     DONE_TESTING();
 }

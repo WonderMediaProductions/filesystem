@@ -227,13 +227,30 @@ public:
 
 	std::string extension() const {
 		const std::string &name = basename();
-		size_t pos = name.find_last_of(".");
+		size_t pos = name.find_last_of('.');
 
 		if (pos == std::string::npos) {
 			return "";
 		}
 
 		return name.substr(pos + 1);
+	}
+
+	path with_extension(std::string newext) {
+		if (this->empty()) {
+			return newext;
+		} else {
+			path result = dirname();
+
+			const std::string &name = basename();
+			size_t pos = name.find_last_of('.');
+
+			result.leafs.push_back((pos == std::string::npos)
+				? name + newext
+				: name.substr(0, pos) + newext);
+
+			return result;
+		}
 	}
 
 	path dirname() const {
