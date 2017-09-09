@@ -1,8 +1,7 @@
 #include <iostream>
 #include <map>
 #include <unordered_set>
-#include "filesystem/path.h"
-#include "filesystem/resolver.h"
+#include "./filesystem.hpp"
 
 using namespace std;
 using namespace filesystem;
