@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <unordered_set>
+
 #include "./filesystem.hpp"
 
 using namespace std;
@@ -164,6 +165,7 @@ int main(int argc, char **argv) {
     cout << "resolve(nonexistant) = " << resolver().resolve("nonexistant") << endl;
 
     cout << "with_extension(foo.bar -> foo.qix) = " << path("a/b/c/foo.bar").with_extension(".qix") << endl;
+    cout << "relative(base=/a/b/c/d, target=/a/b/f/g/e) = " << path("/a/b/f/g/e").relative("/a/b/c/d") << endl;
 
     DONE_TESTING();
 }

@@ -384,6 +384,38 @@ public:
 		return result;
 	}
 
+	path relative(const path &base) const {
+		const path _base = base.resolve();
+		const path _rel = this->resolve();
+
+		if (!_rel.is_absolute()) {
+			return _base / _rel;
+		}
+
+		path result;
+
+		auto base_itr = _base.leafs.cbegin();
+		auto rel_itr = _rel.leafs.cbegin();
+
+		while (base_itr != _base.leafs.cend() || rel_itr != _rel.leafs.cend()) {
+			if (base_itr == _base.leafs.cend()) {
+				result.leafs.push_back(*(rel_itr++));
+				continue;
+			}
+
+			if (*base_itr == *rel_itr) {
+				++base_itr;
+				++rel_itr;
+				continue;
+			}
+
+			result.leafs.push_back("..");
+			++base_itr;
+		}
+
+		return result;
+	}
+
 	path resolve(const path &to) const {
 		path result = this->resolve();
 
