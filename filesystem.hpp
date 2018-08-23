@@ -52,8 +52,9 @@ namespace std {
 		class path {
 			friend struct std::hash<class filesystem::path>;
 		public:
-			typedef std::string value_type;
-			typedef std::vector<value_type> leaf_list;
+			typedef std::string string_type;
+			typedef std::string::value_type value_type;
+			typedef std::vector<string_type> leaf_list;
 
 			enum path_type {
 				windows_path = 0,
@@ -70,19 +71,11 @@ namespace std {
 				, absolute(false) {
 			}
 
-			path(const path &path)
-				: type(path.type)
-				, leafs(path.leafs)
-				, absolute(path.absolute) {
-			}
+			~path() = default;
 
-#if __cplusplus >= 201103L
-			path(path &&path)
-				: type(path.type)
-				, leafs(std::move(path.leafs))
-				, absolute(path.absolute) {
-			}
-#endif
+			path(const path &path) = default;
+
+			path(path &&path) = default;
 
 			path(const char *string) {
 				this->set(string);
@@ -231,8 +224,9 @@ namespace std {
 #endif
 			}
 
+			// TODO: Not compatible with spec!
 			std::string extension() const {
-				const std::string &name = basename();
+				const std::string &name = filename();
 				size_t pos = name.find_last_of('.');
 
 				if (pos == std::string::npos) {
@@ -249,7 +243,7 @@ namespace std {
 				else {
 					path result = dirname();
 
-					const std::string &name = basename();
+					const std::string &name = filename();
 					size_t pos = name.find_last_of('.');
 
 					result.leafs.push_back((pos == std::string::npos)
@@ -258,6 +252,11 @@ namespace std {
 
 					return result;
 				}
+			}
+
+			void replace_extension(std::string newext)
+			{
+				set(with_extension(newext));
 			}
 
 			path dirname() const {
@@ -302,6 +301,34 @@ namespace std {
 				return result;
 			}
 
+			const string_type& native() const
+			{
+				if (cachedNativePath.empty())
+					cachedNativePath = str(native_path);
+
+				return cachedNativePath;
+			}
+
+			const string_type& string() const
+			{
+				return native();
+			}
+
+			string_type generic_string() const
+			{
+				return str(posix_path);
+			}
+
+			const value_type* c_str() const
+			{
+				return native().c_str();
+			}
+
+			operator string_type() const
+			{
+				return native();
+			}
+
 			std::string str(path_type type = native_path) const {
 				std::ostringstream oss;
 
@@ -336,14 +363,37 @@ namespace std {
 					this->leafs = tokenize(str, "/");
 					this->absolute = !str.empty() && str[0] == '/';
 				}
+				this->cachedNativePath.clear();
 			}
 
-			std::string basename() const {
+			std::string filename() const {
 				if (this->empty()) {
 					return "";
 				}
 
 				return this->leafs.back();
+			}
+
+			/** 
+			 * https://en.cppreference.com/w/cpp/filesystem/path/stem
+			 * Returns the filename identified by the generic-format path stripped of its extension.
+			 * Returns the substring from the beginning of filename() up to and not including the last period (.) character, with the following exceptions:
+			 * If the first character in the filename is a period, that period is ignored (a filename like ".profile" is not treated as an extension)
+			 * If the filename is one of the special filesystem components dot or dot-dot, or if it has no periods, the function returns the entire filename().
+			 */
+			path stem() const
+			{
+				auto last = filename();
+
+				if (last.empty())
+					return path();
+
+				const auto pos = last.find_last_of('.');
+
+				if (pos == 0 || pos == std::string::npos || last == "..")
+					return last;
+
+				return last.substr(0, pos);
 			}
 
 			path resolve(bool tryabsolute = true) const {
@@ -464,6 +514,7 @@ namespace std {
 				this->type = path.type;
 				this->leafs = path.leafs;
 				this->absolute = path.absolute;
+				this->cachedNativePath = path.cachedNativePath;
 				return *this;
 			}
 
@@ -472,6 +523,7 @@ namespace std {
 					this->type = path.type;
 					this->leafs = std::move(path.leafs);
 					this->absolute = path.absolute;
+					this->cachedNativePath = path.cachedNativePath;
 				}
 
 				return *this;
@@ -635,6 +687,7 @@ namespace std {
 			path_type type;
 			leaf_list leafs;
 			bool absolute;
+			mutable string_type cachedNativePath;
 		};
 
 		inline bool create_directory(const path &p) {
@@ -729,6 +782,28 @@ namespace std {
 			std::vector<path> m_paths;
 		};
 
+		inline bool create_directories(const path& p)
+		{
+			return p.make_absolute().mkdirp();
+		}
+
+		inline path temp_directory_path()
+		{
+#if defined(_WIN32)
+			const auto length = GetTempPathA(0, nullptr);
+			std::vector<char> buffer(length);
+			GetTempPathA(length, &buffer[0]);
+			const std::string tempPath(&buffer[0]);
+			return tempPath;
+#else
+			return std::string(P_tmpdir);
+#endif
+		}
+
+		inline bool exists(const path& path)
+		{
+			return path.exists();
+		}
 	}
 
 	template <>
