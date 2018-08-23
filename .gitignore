@@ -1,5 +1,9 @@
+*.sw[a-p]
+*.DS_Store
+
 CMakeCache.txt
 CMakeFiles
 Makefile
 cmake_install.cmake
 path_demo
+/build/
