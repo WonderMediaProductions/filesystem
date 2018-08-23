@@ -119,6 +119,10 @@ namespace std {
 				return this->absolute;
 			}
 
+			bool is_relative() const {
+				return !this->is_absolute();
+			}
+
 			leaf_list::iterator begin() {
 				return this->leafs.begin();
 			}
