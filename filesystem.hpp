@@ -141,14 +141,23 @@ namespace std {
 			}
 
 			path make_absolute() const {
-#if !defined(_WIN32)
-				char temp[PATH_MAX];
+				if (is_absolute())
+					return *this;
 
-				if (realpath(str().c_str(), temp) == NULL) {
-					throw std::runtime_error("Internal error in realpath(): " + std::string(strerror(errno)));
+#if !defined(_WIN32)
+				// realpath only works when file exists
+				if (exists())
+				{
+					char temp[PATH_MAX];
+					if (realpath(str().c_str(), temp) == NULL) {
+						throw std::runtime_error("Internal error in realpath(): " + std::string(strerror(errno)));
+					}
+
+					return path(temp);
 				}
 
-				return path(temp);
+				// File does not exist, prefix with current directory, and resolve
+				return (getcwd() / *this).resolve();
 #else
 				std::wstring value = wstr(), out(MAX_PATH, '\0');
 				DWORD length = GetFullPathNameW(value.c_str(), MAX_PATH, &out[0], NULL);
@@ -432,18 +441,6 @@ namespace std {
 					++itr;
 				}
 
-				return result;
-			}
-
-			path as_relative() const {
-				path result(*this);
-				result.absolute = false;
-				return result;
-			}
-
-			path as_absolute() const {
-				path result(*this);
-				result.absolute = true;
 				return result;
 			}
 

@@ -102,14 +102,15 @@ int main(int argc, char **argv) {
 	p = "foo/bar";
 #ifdef _WIN32
 	IS(p.native(), "foo\\bar");
+	IS(p.string(), "foo\\bar");
 	IS((string)p, "foo\\bar");
 	OK(strcmp(p.c_str(), "foo\\bar") == 0);
 #else
 	IS(p.native(), "foo/bar");
+	IS(p.string(), "foo/bar");
 	IS(p, "foo/bar");
 	OK(strcmp(p.c_str(), "foo/bar") == 0);
 #endif
-
 
 	IS(path(".").stem(), ".");
 	IS(path("..").stem(), "..");
@@ -126,7 +127,19 @@ int main(int argc, char **argv) {
 	IS(path("/dir/file.").stem(), "file");
 	IS(path("/dir/file.ext").stem(), "file");
 
-	cout << (path1 / path1.as_relative()) << endl;
+	auto sourcePath = path(__FILE__);
+	OK(sourcePath.exists());
+
+	auto sourceDir = sourcePath.dirname();
+	OK((sourceDir / "path_demo.cpp").exists());
+
+	chdir(sourceDir.c_str());
+
+	IS(path::getcwd(), sourceDir);
+
+	IS(sourcePath.make_absolute(), __FILE__);
+	IS(path("path_demo.cpp").make_absolute(), __FILE__);
+	IS(path("./path_demo.cpp").make_absolute(), __FILE__);
 
 	cout << "some/path.ext:operator==() = " << (path("some/path.ext") == path("some/path.ext")) << endl;
 	cout << "some/path.ext:operator==() (unequal) = " << (path("some/path.ext") == path("another/path.ext")) << endl;
@@ -148,36 +161,37 @@ int main(int argc, char **argv) {
 	cout << "nonexistant:is_directory = " << path("nonexistant").is_directory() << endl;
 	cout << "nonexistant:filename = " << path("nonexistant").filename() << endl;
 	cout << "nonexistant:extension = " << path("nonexistant").extension() << endl;
-	cout << "filesystem/path.h:exists = " << path("filesystem/path.h").exists() << endl;
-	cout << "filesystem/path.h:is_file = " << path("filesystem/path.h").is_file() << endl;
-	cout << "filesystem/path.h:is_directory = " << path("filesystem/path.h").is_directory() << endl;
-	cout << "filesystem/path.h:filename = " << path("filesystem/path.h").filename() << endl;
-	cout << "filesystem/path.h:extension = " << path("filesystem/path.h").extension() << endl;
+	cout << "filesystem.hpp:exists = " << path("filesystem.hpp").exists() << endl;
+	cout << "filesystem.hpp:is_file = " << path("filesystem.hpp").is_file() << endl;
+	cout << "filesystem.hpp:is_directory = " << path("filesystem.hpp").is_directory() << endl;
+	cout << "filesystem.hpp:filename = " << path("filesystem.hpp").filename() << endl;
+	cout << "filesystem.hpp:extension = " << path("filesystem.hpp").extension() << endl;
 	cout << "a/../../foo.c:resolve = " << path("a/../../foo.c").resolve() << endl;
-	if (path("filesystem/path.h").exists()) {
-		cout << "filesystem/path.h:make_absolute = " << path("filesystem/path.h").make_absolute() << endl;
-	}
-	cout << "filesystem/path.h:dirname = " << path("filesystem/path.h").dirname() << endl;
-	cout << "filesystem/path.h:filename = " << path("filesystem/path.h").filename() << endl;
-	cout << "filesystem/path.h:resolve = " << path("filesystem/path.h").resolve() << endl;
+	cout << "filesystem.hpp:make_absolute = " << path("filesystem.hpp").make_absolute() << endl;
+	cout << "missing:make_absolute = " << path("missing").make_absolute() << endl;
+	cout << "./missing:make_absolute = " << path("./missing").make_absolute() << endl;
+	cout << "../missing:make_absolute = " << path("../missing").make_absolute() << endl;
+	cout << "filesystem.hpp:dirname = " << path("filesystem.hpp").dirname() << endl;
+	cout << "filesystem.hpp:filename = " << path("filesystem.hpp").filename() << endl;
+	cout << "filesystem.hpp:resolve = " << path("filesystem.hpp").resolve() << endl;
 	cout << "/a/b/c/../../d/e/foo/../././././bar.h:resolve = " << path("/a/b/c/../../d/e/foo/../././././bar.h").resolve() << endl;
-	cout << "filesystem/../path.h:resolve = " << path("filesystem/../path.h").resolve() << endl;
-	cout << "filesystem/path.h:resolve /a/b/c = " << path("/a/b/c").resolve("filesystem/path.h") << endl;
-	cout << "../filesystem/path.h:resolve /a/b/c = " << path("/a/b/c").resolve("../filesystem/path.h") << endl;
-	cout << "../filesystem/path.h:resolve /a/b/../c = " << path("/a/b/../c").resolve("../filesystem/path.h") << endl;
+	cout << "../filesystem.hpp:resolve = " << path("../filesystem.hpp").resolve() << endl;
+	cout << "filesystem.hpp:resolve /a/b/c = " << path("/a/b/c").resolve("filesystem.hpp") << endl;
+	cout << "../filesystem.hpp:resolve /a/b/c = " << path("/a/b/c").resolve("../filesystem.hpp") << endl;
+	cout << "../filesystem.hpp:resolve /a/b/../c = " << path("/a/b/../c").resolve("../filesystem.hpp") << endl;
 	cout << "../filesystem:exists = " << path("../filesystem").exists() << endl;
 	cout << "../filesystem:is_file = " << path("../filesystem").is_file() << endl;
 	cout << "../filesystem:is_directory = " << path("../filesystem").is_directory() << endl;
 	cout << "../filesystem:extension = " << path("../filesystem").extension() << endl;
 	cout << "../filesystem:filename = " << path("../filesystem").filename() << endl;
-	cout << "../filesystem/path.h:resolve = " << path("../filesystem/path.h").resolve() << endl;
+	cout << "../filesystem.hpp:resolve = " << path("../filesystem.hpp").resolve() << endl;
 	if (path("../filesystem").exists()) {
 		cout << "../filesystem:make_absolute = " << path("../filesystem").make_absolute() << endl;
 	}
 	cout << "../../a/b/c/../d:resolve = " << path("../../a/b/c/../d").resolve() << endl;
 	cout << "/../../a/b/c/../d:resolve = " << path("/../../a/b/c/../d").resolve() << endl;
 
-	cout << "resolve(filesystem/path.h) = " << resolver().resolve("filesystem/path.h") << endl;
+	cout << "resolve(filesystem.hpp) = " << resolver().resolve("filesystem.hpp") << endl;
 	cout << "resolve(nonexistant) = " << resolver().resolve("nonexistant") << endl;
 
 	cout << "with_extension(foo.bar -> foo.qix) = " << path("a/b/c/foo.bar").with_extension(".qix") << endl;
